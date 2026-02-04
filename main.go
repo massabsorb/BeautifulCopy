@@ -8,15 +8,20 @@ import (
 	"path/filepath"
 )
 
+const GREEN = "\033[1;32m"
+const BLUE = "\033[1;34m"
+const WHITE = "\033[1;37m"
+const RESET = "\033[00m"
+
 func main(){
-	if len(os.Args) <= 1{
-		fmt.Println("bcp file1 Dir/")
-		fmt.Println("bcp file1 file2 ... fileN Dir/")
+	if len(os.Args) < 3{
+		fmt.Printf("%s# %sbcp file1 Directory/\n", BLUE, RESET)
+		fmt.Printf("%s# %sbcp file1 file2 ... fileN Directory/\n", BLUE, RESET)
 		os.Exit(1)
 	}
 
 	lenArgs := len(os.Args)
-	files := os.Args[1:lenArgs]
+	files := os.Args[1:lenArgs - 1]
 	dstPath := os.Args[lenArgs-1] 
 
 	for counter := 0; counter != len(files); counter++{
@@ -46,7 +51,7 @@ func copyFile(file string, path string)(error){
 	
 	switch GetMode := fileInfo.Mode();{
 		case GetMode.IsDir():
-			fmt.Printf("%s ", file)
+			fmt.Printf("%s%s%s ", BLUE, file, RESET)
 			return errors.New("Directory skipped.")
 	}	
 
@@ -61,15 +66,15 @@ func copyFile(file string, path string)(error){
 		return dstErr
 	}
 
-	var copied int64
-	var copiedCounter int64
+	var copied int64 = 0
+	var copiedCounter int64 = 0
 
 	for {
 		blockSize := calcBlock(fileInfo.Size(), copied)
 		copied, copyStatus := io.CopyN(dstFd, srcFd, blockSize)
 		copiedCounter += copied
 		progress := (float64(copiedCounter) / float64(fileInfo.Size())) * 100
-		fmt.Printf("%.2f%% %s %s\r", progress, file, path)
+		fmt.Printf("%s%.2f%% %s %s%s\r", GREEN, progress, RESET, file, path)
 
 		if copyStatus == io.EOF{
 			fmt.Println()
