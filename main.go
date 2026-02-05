@@ -11,6 +11,7 @@ import (
 const GREEN = "\033[1;32m"
 const BLUE = "\033[1;34m"
 const WHITE = "\033[1;37m"
+const RED = "\033[1;31m"
 const RESET = "\033[00m"
 
 func main(){
@@ -27,7 +28,7 @@ func main(){
 	for counter := 0; counter != len(files); counter++{
 		copyFileErr := copyFile(files[counter], dstPath)
 		if copyFileErr != nil{
-			fmt.Println(copyFileErr)
+			fmt.Printf("%s%s%s\n", RED, copyFileErr, RESET)
 		}
 	}				
 }
@@ -47,18 +48,19 @@ func calcBlock(filesize int64, copied int64)(int64){
 
 func copyFile(file string, path string)(error){
 
+	srcFd, srcErr := os.Open(file)
+	if srcErr != nil{
+		return srcErr
+	}
+
 	fileInfo, _ := os.Stat(file)	
+	fileSize := fileInfo.Size()
 	
 	switch GetMode := fileInfo.Mode();{
 		case GetMode.IsDir():
 			fmt.Printf("%s%s%s ", BLUE, file, RESET)
 			return errors.New("Directory skipped.")
 	}	
-
-	srcFd, srcErr := os.Open(file)
-	if srcErr != nil{
-		return srcErr
-	}
 
 	_, fileName := filepath.Split(file)
 	dstFd, dstErr := os.Create(path + fileName)
@@ -70,10 +72,10 @@ func copyFile(file string, path string)(error){
 	var copiedCounter int64 = 0
 
 	for {
-		blockSize := calcBlock(fileInfo.Size(), copied)
+		blockSize := calcBlock(fileSize, copied)
 		copied, copyStatus := io.CopyN(dstFd, srcFd, blockSize)
 		copiedCounter += copied
-		progress := (float64(copiedCounter) / float64(fileInfo.Size())) * 100
+		progress := (float64(copiedCounter) / float64(fileSize)) * 100
 		fmt.Printf("%s%.2f%% %s %s%s\r", GREEN, progress, RESET, file, path)
 
 		if copyStatus == io.EOF{
