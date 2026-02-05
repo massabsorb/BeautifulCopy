@@ -53,8 +53,9 @@ func copyFile(file string, path string)(error){
 		return srcErr
 	}
 
+	var fileSize int64 = 0
 	fileInfo, _ := os.Stat(file)	
-	fileSize := fileInfo.Size()
+	fileSize = fileInfo.Size()
 	
 	switch GetMode := fileInfo.Mode();{
 		case GetMode.IsDir():
@@ -68,15 +69,23 @@ func copyFile(file string, path string)(error){
 		return dstErr
 	}
 
+	if fileSize < 64000{
+		bytesCopied, copyErr := io.Copy(dstFd, srcFd)
+		if copyErr != nil{
+			return copyErr
+		}
+		fmt.Printf("%s%d bytes copied %sFILE:%s%s%s PATH:%s%s%s\n", GREEN, bytesCopied, RESET, BLUE, file, RESET, BLUE, path, RESET)
+		return nil
+	}		
+
 	var copied int64 = 0
 	var copiedCounter int64 = 0
-
 	for {
 		blockSize := calcBlock(fileSize, copied)
 		copied, copyStatus := io.CopyN(dstFd, srcFd, blockSize)
 		copiedCounter += copied
 		progress := (float64(copiedCounter) / float64(fileSize)) * 100
-		fmt.Printf("%s%.2f%% %s %s%s\r", GREEN, progress, RESET, file, path)
+		fmt.Printf("%s%.2f%% %s FILE:%s%s%s PATH:%s%s%s\r", GREEN, progress, RESET, BLUE, file, RESET, BLUE, path, RESET)
 
 		if copyStatus == io.EOF{
 			fmt.Println()
