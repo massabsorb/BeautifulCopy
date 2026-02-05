@@ -31,3 +31,5 @@ Or you can copy **ALL** files from the directory:
 ```bash
 bcp ~/* /usr/share/
 ```
+### 🚀Executing
+![Alt text](terminal.png)
