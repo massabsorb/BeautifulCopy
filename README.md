@@ -5,7 +5,7 @@
 git clone https://github.com/massabsorb/BeautifulCopy.git
 ```
 
-#### 🔨Compiling
+#### 🔨Build
 ```bash
 cd BeautifulCopy
 ```
