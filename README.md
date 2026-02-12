@@ -1,4 +1,5 @@
 # BeautifulCopy
+A program for copying one or more files at a time.
 
 #### 📥Download
 ```bash
