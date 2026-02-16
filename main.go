@@ -16,8 +16,9 @@ const RESET = "\033[00m"
 
 func main(){
 	if len(os.Args) < 3{
-		fmt.Printf("%s# %sbcp file1 Directory/\n", BLUE, RESET)
-		fmt.Printf("%s# %sbcp file1 file2 ... fileN Directory/\n", BLUE, RESET)
+		fmt.Printf("\n\t%sUsage:\n", BLUE)
+		fmt.Printf("\t\t%sbcp%s file1 %sDirectory/\n", BLUE, RESET, GREEN)
+		fmt.Printf("\t\t%sbcp%s file1 file2 ... fileN %sDirectory/%s\n", BLUE, RESET, GREEN, RESET)
 		os.Exit(1)
 	}
 
@@ -45,9 +46,7 @@ func calcBlock(filesize int64, copied int64)(int64){
 	}
 }
 
-
 func copyFile(file string, path string)(error){
-
 	srcFd, srcErr := os.Open(file)
 	if srcErr != nil{
 		return srcErr
@@ -57,6 +56,11 @@ func copyFile(file string, path string)(error){
 	fileInfo, _ := os.Stat(file)	
 	fileSize = fileInfo.Size()
 	
+	if fileSize == 0{
+		fmt.Printf("%s%s ", BLUE, file)
+		return errors.New("The size of the source file is zero ! Nothing to copy about...")
+	}	
+
 	switch GetMode := fileInfo.Mode();{
 		case GetMode.IsDir():
 			fmt.Printf("%s%s%s ", BLUE, file, RESET)
@@ -69,17 +73,9 @@ func copyFile(file string, path string)(error){
 		return dstErr
 	}
 
-	if fileSize < 64000{
-		bytesCopied, copyErr := io.Copy(dstFd, srcFd)
-		if copyErr != nil{
-			return copyErr
-		}
-		fmt.Printf("%s%d bytes copied %sFILE:%s%s%s PATH:%s%s%s\n", GREEN, bytesCopied, RESET, BLUE, file, RESET, BLUE, path, RESET)
-		return nil
-	}		
-
 	var copied int64 = 0
 	var copiedCounter int64 = 0
+
 	for {
 		blockSize := calcBlock(fileSize, copied)
 		copied, copyStatus := io.CopyN(dstFd, srcFd, blockSize)
@@ -87,9 +83,12 @@ func copyFile(file string, path string)(error){
 		progress := (float64(copiedCounter) / float64(fileSize)) * 100
 		fmt.Printf("%s%.2f%% %s FILE:%s%s%s PATH:%s%s%s\r", GREEN, progress, RESET, BLUE, file, RESET, BLUE, path, RESET)
 
-		if copyStatus == io.EOF{
-			fmt.Println()
-			return nil
+		switch{
+			case copyStatus == io.EOF:
+				fmt.Println()
+				return nil
+			default:
+				continue
 		}	
 	}
 }
